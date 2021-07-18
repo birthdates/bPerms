@@ -51,6 +51,15 @@ public class Profile extends Permissible {
      * {@inheritDoc}
      */
     @Override
+    protected void fillCachedPermissions() {
+        super.fillCachedPermissions();
+        cachedPermissions.addAll(bestRank.getAllPermissions());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public void onLoaded() {
         ranks.putIfAbsent(BPerms.getInstance().getRankManager().getDefaultRank().getId(), -1.0D);
         removeExpiredRanks();

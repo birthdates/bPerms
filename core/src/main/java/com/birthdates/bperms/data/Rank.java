@@ -5,6 +5,11 @@ import com.birthdates.bperms.hook.Hooks;
 import com.birthdates.bperms.hook.type.RankHook;
 import com.birthdates.bperms.permission.ServerPermissible;
 
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 public class Rank extends ServerPermissible {
 
     /**
@@ -29,6 +34,15 @@ public class Rank extends ServerPermissible {
     private double weight = 0.0D;
 
     /**
+     * Our inheritance
+     */
+    private Set<String> inheritance = new HashSet<>();
+    /**
+     * Our cached inheritance
+     */
+    private transient Set<Rank> cachedInheritance = new HashSet<>();
+
+    /**
      * Are we the default rank?
      */
     private boolean defaultRank;
@@ -40,6 +54,34 @@ public class Rank extends ServerPermissible {
     public Rank(String id, String name) {
         this(id);
         this.name = name;
+    }
+
+    /**
+     * Are we inherited with a rank?
+     *
+     * @param rank Target rank
+     * @return True, if we are. False, otherwise.
+     */
+    public boolean isInheritedWith(Rank rank) {
+        if (inheritance.contains(rank.getId()))
+            return true;
+
+        for (Rank otherRank : cachedInheritance) {
+            if (otherRank.inheritance.contains(rank.id) || otherRank.isInheritedWith(rank))
+                return true;
+        }
+        return false;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void fillCachedPermissions() {
+        super.fillCachedPermissions();
+        for (Rank rank : cachedInheritance) {
+            cachedPermissions.addAll(rank.getAllPermissions());
+        }
     }
 
     /**
@@ -55,6 +97,32 @@ public class Rank extends ServerPermissible {
     @Override
     public void onLoaded() {
         BPerms.getInstance().getHookManager().callHook(Hooks.RANK_LOADED, rankHook);
+        cachedInheritance = inheritance.stream()
+                .map(id -> BPerms.getInstance().getRankManager().getRankById(id))
+                .filter(Objects::nonNull).collect(Collectors.toSet());
+    }
+
+    /**
+     * Inherit a rank
+     *
+     * @param rank Target rank
+     */
+    public void inherit(Rank rank) {
+        inheritance.add(rank.id);
+        cachedInheritance.add(rank);
+    }
+
+    /**
+     * Un-inherit a rank
+     *
+     * @param rank Target rank
+     * @return True, if this rank was un-inherited. False, otherwise.
+     */
+    public boolean unInherit(Rank rank) {
+        if (!inheritance.remove(rank.id))
+            return false;
+        cachedInheritance.remove(rank);
+        return true;
     }
 
     /**

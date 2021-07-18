@@ -23,7 +23,10 @@ public abstract class Permissible extends RedisDocument {
      */
     protected String prefix = "";
     protected String suffix = "";
-
+    /**
+     * Our cached permissions
+     */
+    protected transient Set<String> cachedPermissions;
     /**
      * Our permissions (server -> permissions)
      */
@@ -32,10 +35,6 @@ public abstract class Permissible extends RedisDocument {
      * Our permission group ids
      */
     private Set<String> permissionGroups;
-    /**
-     * Our cached permissions
-     */
-    private transient Set<String> cachedPermissions;
 
     /**
      * Get our translated prefix
@@ -83,7 +82,7 @@ public abstract class Permissible extends RedisDocument {
     /**
      * Fill {@link Permissible#cachedPermissions} with all our permissions
      */
-    private void fillCachedPermissions() {
+    protected void fillCachedPermissions() {
         cachedPermissions = new HashSet<>();
 
         if (permissions == null)
