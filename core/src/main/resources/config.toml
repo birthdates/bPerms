@@ -1,4 +1,5 @@
 serverId = "test"
+bypassServerBasedPermissions = false
 
 [redis]
 host = "localhost"

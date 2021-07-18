@@ -14,6 +14,10 @@ public class Configuration {
      */
     private String serverId;
     /**
+     * Bypass server based limits?
+     */
+    private boolean bypassServerBasedPermissions;
+    /**
      * Redis settings
      */
     private RedisSettings redis;
@@ -38,6 +42,15 @@ public class Configuration {
      */
     public RedisSettings getRedis() {
         return redis;
+    }
+
+    /**
+     * Are we bypassing server based permissions?
+     *
+     * @return True, if we are. False, otherwise.
+     */
+    public boolean isBypassServerBasedPermissions() {
+        return bypassServerBasedPermissions;
     }
 
     /**

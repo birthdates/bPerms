@@ -92,8 +92,14 @@ public abstract class Permissible extends RedisDocument {
             permissionGroups = new HashSet<>();
 
         // Fill
-        cachedPermissions.addAll(permissions.getOrDefault("all", Collections.emptySet()));
-        cachedPermissions.addAll(permissions.getOrDefault(BPerms.getInstance().getConfiguration().getServerId(), Collections.emptySet()));
+        if (BPerms.getInstance().getConfiguration().isBypassServerBasedPermissions()) {
+            for (Set<String> permissions : permissions.values()) {
+                cachedPermissions.addAll(permissions);
+            }
+        } else {
+            cachedPermissions.addAll(permissions.getOrDefault("all", Collections.emptySet()));
+            cachedPermissions.addAll(permissions.getOrDefault(BPerms.getInstance().getConfiguration().getServerId(), Collections.emptySet()));
+        }
 
         List<String> toRemove = new ArrayList<>();
         for (String groupId : permissionGroups) {

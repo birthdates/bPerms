@@ -21,7 +21,9 @@ public abstract class ServerPermissible extends Permissible {
      * @return True, if we are. False, otherwise.
      */
     public boolean isApplicable() {
-        return servers.stream().anyMatch(server -> server.equalsIgnoreCase("all") ||
+        return servers.stream().anyMatch(server ->
+                BPerms.getInstance().getConfiguration().isBypassServerBasedPermissions() ||
+                server.equalsIgnoreCase("all") ||
                 server.equalsIgnoreCase(BPerms.getInstance().getConfiguration().getServerId()));
     }
 
