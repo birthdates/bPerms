@@ -1,0 +1,7 @@
+name: bPerms
+version: 1.0.0
+main: com.birthdates.bperms.bukkit.BPermsPlugin
+authors: [ birthdates ]
+description: A permission plugin
+api-version: 1.13
+softdepend: [ Vault ]
