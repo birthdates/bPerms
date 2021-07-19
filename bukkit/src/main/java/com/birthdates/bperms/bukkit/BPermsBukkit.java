@@ -102,4 +102,12 @@ public class BPermsBukkit extends BPerms {
     public String getColor() {
         return "&b";
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public char getCommandPrefix() {
+        return 0;
+    }
 }

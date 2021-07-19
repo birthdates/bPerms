@@ -219,6 +219,13 @@ public abstract class BPerms {
     public abstract String getColor();
 
     /**
+     * Get the character prefix for commands (i.e if it's b, /rank -> /brank)
+     *
+     * @return A {@link Character}
+     */
+    public abstract char getCommandPrefix();
+
+    /**
      * Run task async with executor
      *
      * @param task Target task

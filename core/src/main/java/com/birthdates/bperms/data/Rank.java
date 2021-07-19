@@ -106,10 +106,13 @@ public class Rank extends ServerPermissible {
      * Inherit a rank
      *
      * @param rank Target rank
+     * @return True, if we've inherited this rank. False otherwise.
      */
-    public void inherit(Rank rank) {
-        inheritance.add(rank.id);
+    public boolean inherit(Rank rank) {
+        if (!inheritance.add(rank.id))
+            return false;
         cachedInheritance.add(rank);
+        return true;
     }
 
     /**

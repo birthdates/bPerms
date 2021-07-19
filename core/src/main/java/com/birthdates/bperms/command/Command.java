@@ -23,7 +23,7 @@ public abstract class Command {
     private final String[] aliases;
 
     public Command(String name, String permission, String usageArgs, int minArgs, String... aliases) {
-        this.name = name;
+        this.name = BPerms.getInstance().getCommandPrefix() + name;
         this.permission = permission;
         this.usageArgs = usageArgs;
         this.minArgs = minArgs;

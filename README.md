@@ -6,6 +6,11 @@ Bukkit & BungeeCord server. Or you can have two Bukkit servers or vice versa.
 bPermissions uses [Redis](https://redis.io/) for its primary database and its lighting fast cross-server messaging
 system.
 
+# Supported Platforms
+* Bukkit/Spigot (with Vault support)
+* BungeeCord
+* Sponge
+
 # Permission Groups
 
 This is one of the main features I focused on which is what I found most annoying about the inheritance based

@@ -40,8 +40,9 @@ public class BPermsPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         Bukkit.getPluginManager().registerEvents(new PlayerListener(), this);
-        VaultHook.init(this);
         BPermsBukkit.getInstance().enable();
+        if (Bukkit.getPluginManager().isPluginEnabled("Vault"))
+            VaultHook.init(this);
     }
 
     /**

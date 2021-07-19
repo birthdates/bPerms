@@ -21,12 +21,10 @@ public class VaultHook {
      * @param plugin Owning plugin
      */
     public static void init(Plugin plugin) {
-        if (Bukkit.getPluginManager().isPluginEnabled("Vault")) {
-            Permission permission = new Permissions();
-            Bukkit.getServer().getServicesManager().register(Permission.class, permission, plugin, ServicePriority.Highest);
-            Bukkit.getServer().getServicesManager().register(Chat.class, new Messages(permission), plugin, ServicePriority.Highest);
-            BPerms.log("Vault hook initiated.");
-        }
+        Permission permission = new Permissions();
+        Bukkit.getServer().getServicesManager().register(Permission.class, permission, plugin, ServicePriority.Highest);
+        Bukkit.getServer().getServicesManager().register(Chat.class, new Messages(permission), plugin, ServicePriority.Highest);
+        BPerms.log("Vault hook initiated.");
     }
 
     /**

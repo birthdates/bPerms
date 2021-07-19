@@ -94,6 +94,14 @@ public class BPermsBungee extends BPerms {
      * {@inheritDoc}
      */
     @Override
+    public char getCommandPrefix() {
+        return 'b';
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public void logMessage(String message) {
         BPermsPlugin.getInstance().getLogger().log(Level.INFO, message);
     }
