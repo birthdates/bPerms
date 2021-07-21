@@ -1,12 +1,13 @@
 package com.birthdates.bperms;
 
-import com.birthdates.bperms.command.impl.RankCommand;
+import com.birthdates.bperms.command.impl.rank.RankCommand;
 import com.birthdates.bperms.config.Configuration;
 import com.birthdates.bperms.manager.CommandManager;
 import com.birthdates.bperms.manager.HookManager;
 import com.birthdates.bperms.manager.PermissionManager;
 import com.birthdates.bperms.manager.PlayerManager;
 import com.birthdates.bperms.manager.RankManager;
+import com.birthdates.bperms.redis.RedisSub;
 import com.birthdates.redisdata.RedisManager;
 import com.moandjiezana.toml.Toml;
 import org.apache.commons.lang3.Validate;
@@ -55,6 +56,10 @@ public abstract class BPerms {
      * Our executor
      */
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+    /**
+     * Our redis sub
+     */
+    private final RedisSub redisSub;
 
     /**
      * Our main constructor
@@ -78,6 +83,7 @@ public abstract class BPerms {
 
         // Load Redis
         RedisManager.init(null, configuration.getRedis().getHost(), configuration.getRedis().getDatabase(), configuration.getRedis().getPort(), configuration.getRedis().getUsername(), configuration.getRedis().getPassword());
+        redisSub = new RedisSub();
 
         // Load rank manager
         rankManager = new RankManager();
@@ -120,6 +126,15 @@ public abstract class BPerms {
     @NotNull
     public ScheduledExecutorService getExecutor() {
         return executor;
+    }
+
+    /**
+     * Get our Redis messenger
+     *
+     * @return A {@link RedisSub} instance
+     */
+    public RedisSub getRedisSub() {
+        return redisSub;
     }
 
     /**

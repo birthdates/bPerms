@@ -1,6 +1,8 @@
 package com.birthdates.bperms.bungee.manager;
 
+import com.birthdates.bperms.BPerms;
 import com.birthdates.bperms.bungee.BPermsBungee;
+import com.birthdates.bperms.data.Profile;
 import com.birthdates.bperms.manager.PlayerManager;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
@@ -75,6 +77,27 @@ public class BungeePlayerManager extends PlayerManager {
     @Override
     public String translate(String message) {
         return ChatColor.translateAlternateColorCodes('&', message);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getName(UUID id) {
+        Profile profile = BPerms.getInstance().getPlayerManager().getProfile(id);
+        if (profile == null || profile.getLastName() == null) {
+            return "Unknown";
+        }
+        return profile.getLastName();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getName(Object player) {
+        BPermsBungee.validateSender(player);
+        return ((CommandSender) player).getName();
     }
 
     /**

@@ -72,6 +72,20 @@ public class BukkitPlayerManager extends PlayerManager {
      * {@inheritDoc}
      */
     @Override
+    public String getName(UUID id) {
+        return Bukkit.getOfflinePlayer(id).getName();
+    }
+
+    @Override
+    public String getName(Object player) {
+        BPermsBukkit.validateSender(player);
+        return ((CommandSender) player).getName();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public Collection<Object> getOnlinePlayers() {
         return new ArrayList<>(Bukkit.getOnlinePlayers());
     }

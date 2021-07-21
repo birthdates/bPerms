@@ -3,13 +3,17 @@ package com.birthdates.bperms.sponge.manager;
 import com.birthdates.bperms.manager.PlayerManager;
 import com.birthdates.bperms.sponge.BPermsPlugin;
 import com.birthdates.bperms.sponge.BPermsSponge;
+import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.entity.living.player.User;
+import org.spongepowered.api.service.user.UserStorageService;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.serializer.TextSerializers;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -67,6 +71,31 @@ public class SpongePlayerManager extends PlayerManager {
     @Override
     public String translate(String message) {
         return TextSerializers.FORMATTING_CODE.serialize(Text.of(message));
+    }
+
+    @Override
+    public String getName(UUID id) {
+        User user = getUser(id).orElse(null);
+        if (user == null)
+            return "Unknown";
+        return user.getName();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Optional<User> getUser(UUID uuid) {
+        Optional<UserStorageService> userStorage = Sponge.getServiceManager().provide(UserStorageService.class);
+        return userStorage.flatMap(storage -> storage.get(uuid));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getName(Object player) {
+        BPermsSponge.validateSender(player);
+        return ((CommandSource) player).getName();
     }
 
     /**

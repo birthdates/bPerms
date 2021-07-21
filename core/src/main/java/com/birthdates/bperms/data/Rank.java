@@ -5,6 +5,8 @@ import com.birthdates.bperms.hook.Hooks;
 import com.birthdates.bperms.hook.type.RankHook;
 import com.birthdates.bperms.permission.ServerPermissible;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -56,6 +58,22 @@ public class Rank extends ServerPermissible {
         this.name = name;
     }
 
+    public Collection<Rank> getInheritedRanks() {
+        Collection<Rank> ranks = new ArrayList<>();
+        getInheritedRanks(ranks);
+        return ranks;
+    }
+
+    private void getInheritedRanks(Collection<Rank> ranks) {
+        for (String id : inheritance) {
+            Rank rank = BPerms.getInstance().getRankManager().getRankById(id);
+            if (rank == null)
+                continue;
+            ranks.add(rank);
+            rank.getInheritedRanks(ranks);
+        }
+    }
+
     /**
      * Are we inherited with a rank?
      *
@@ -84,11 +102,54 @@ public class Rank extends ServerPermissible {
         }
     }
 
+
+    /**
+     * Call the change hook with Redis call
+     */
+    public void callChangeHook() {
+        callChangeHook(true);
+    }
+
     /**
      * Call the change hook
+     *
+     * @param redis Send update through Redis?
      */
-    private void callChangeHook() {
-        BPerms.getInstance().getHookManager().callHook(Hooks.RANK_CHANGED, rankHook);
+    public void callChangeHook(boolean redis) {
+        callChangeHook(redis, Hooks.RANK_CHANGED);
+    }
+
+    /**
+     * Call the change hook
+     *
+     * @param redis Send update through Redis?
+     * @param hook  Type of hook
+     */
+    public void callChangeHook(boolean redis, Hooks hook) {
+        BPerms.getInstance().getHookManager().callHook(hook, rankHook);
+
+        if (redis && BPerms.getInstance().getRankManager() != null)
+            BPerms.getInstance().getRankManager().sendUpdate(this);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void addPermission(String server, String permission, long expiry) {
+        super.addPermission(server, permission, expiry);
+        callChangeHook(true, Hooks.RANK_CHANGED_PERMISSIONS);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean removePermission(String server, String permission) {
+        boolean ret = super.removePermission(server, permission);
+        if (ret)
+            callChangeHook(true, Hooks.RANK_CHANGED_PERMISSIONS);
+        return ret;
     }
 
     /**

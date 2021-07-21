@@ -15,6 +15,7 @@ public enum Hooks {
     RANK_REMOVED("rank_removed", RankHook.class),
     RANK_LOADED("rank_loaded", RankHook.class),
     RANK_CHANGED("rank_changed", RankHook.class),
+    RANK_CHANGED_PERMISSIONS("rank_changed_permissions", RankHook.class),
     PLAYER_GRANTED_RANK("player_granted_rank", PlayerProfileRankHook.class),
     PLAYER_REVOKED_RANK("player_revoked_rank", PlayerProfileRankHook.class),
     PLAYER_JOINED("player_joined", PlayerHook.class);

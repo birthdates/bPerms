@@ -30,7 +30,6 @@ public class BPermsSponge extends BPerms {
     private final PermissionManager permissionManager = new SpongePermissionManager();
     private final PlayerManager playerManager = new SpongePlayerManager();
 
-
     /**
      * Validate player is of type {@link Player}
      *

@@ -7,6 +7,7 @@ bPermissions uses [Redis](https://redis.io/) for its primary database and its li
 system.
 
 # Supported Platforms
+
 * Bukkit/Spigot (with Vault support)
 * BungeeCord
 * Sponge

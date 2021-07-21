@@ -1,4 +1,4 @@
-package com.birthdates.bperms.command.impl.args;
+package com.birthdates.bperms.command.impl.rank.args;
 
 import com.birthdates.bperms.BPerms;
 import com.birthdates.bperms.command.ArgFunction;

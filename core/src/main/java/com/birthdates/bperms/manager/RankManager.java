@@ -1,7 +1,9 @@
 package com.birthdates.bperms.manager;
 
 import com.birthdates.bperms.BPerms;
+import com.birthdates.bperms.data.Profile;
 import com.birthdates.bperms.data.Rank;
+import com.birthdates.bperms.hook.Hook;
 import com.birthdates.bperms.hook.Hooks;
 import com.birthdates.bperms.hook.type.RankHook;
 import com.birthdates.redisdata.data.RedisDataManager;
@@ -12,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Rank manager
@@ -45,7 +48,43 @@ public class RankManager extends RedisDataManager<Rank> {
             rank.save();
             addData(rank);
         }
+
         sortRanks();
+        listenForUpdates();
+    }
+
+    public void sendUpdate(Rank rank) {
+        BPerms.getInstance().getRedisSub().sendMessage("RANK_UPDATE", rank);
+    }
+
+    private void listenForUpdates() {
+        BPerms.getInstance().getHookManager().registerHookListener(this);
+        BPerms.getInstance().getRedisSub().registerListener("RANK_UPDATE", message -> {
+            Rank rank = message.get(Rank.class);
+            if (rank == null)
+                return;
+
+            Rank current = getRankById(rank.getId());
+            if (current == null)
+                return;
+
+            rank.applyTo(current);
+            rank.callChangeHook(false);
+        });
+    }
+
+    @Hook(hook = Hooks.RANK_CHANGED_PERMISSIONS)
+    private void onRankChangedPermissions(RankHook hook) {
+        hook.getRank().resetPermissionCache();
+        for (Rank rank : hook.getRank().getInheritedRanks()) {
+            rank.resetPermissionCache();
+        }
+        for (Object player : BPerms.getInstance().getPlayerManager().getOnlinePlayers()) {
+            UUID id = BPerms.getInstance().getPlayerManager().getId(player);
+            Profile profile = BPerms.getInstance().getPlayerManager().getProfile(id, false);
+            if (profile.getRanks().contains(hook.getRank()))
+                profile.resetPermissionCache();
+        }
     }
 
     /**

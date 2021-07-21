@@ -42,9 +42,20 @@ public class Profile extends Permissible {
      * Our rank id -> expiry map (-1 = permanent)
      */
     private Map<String, Double> ranks = new HashMap<>();
+    private String lastName;
 
     public Profile(UUID id) {
         this.id = id;
+    }
+
+    @Override
+    public String getName() {
+        lastName = cachedPlayer != null ? BPerms.getInstance().getPlayerManager().getName(cachedPlayer) : BPerms.getInstance().getPlayerManager().getName(id);
+        return lastName;
+    }
+
+    public String getLastName() {
+        return lastName;
     }
 
     /**

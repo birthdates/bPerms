@@ -70,7 +70,7 @@ public abstract class ArgumentCommand extends Command {
         BPerms.getInstance().getPlayerManager().sendMessage(player, BPerms.getInstance().getColor() + "&lRank Help");
         BPerms.getInstance().getPlayerManager().sendMessage(player, "");
         for (Argument entry : args) {
-            String name = StringUtils.join(entry.aliases, "|");
+            String name = String.join("|", entry.aliases);
             BPerms.getInstance().getPlayerManager().sendMessage(player, "&7/" + label + " &f" + name + "&f " + entry.argsDescription);
         }
         BPerms.getInstance().getPlayerManager().sendMessage(player, "");

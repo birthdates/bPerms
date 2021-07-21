@@ -207,6 +207,22 @@ public abstract class PlayerManager extends RedisDataManager<Profile> {
     public abstract String translate(String message);
 
     /**
+     * Get a offline player's name from their ID
+     *
+     * @param id Target ID
+     * @return A {@link String} name or "Unknown" if not found
+     */
+    public abstract String getName(UUID id);
+
+    /**
+     * Get a player's name
+     *
+     * @param player Target player
+     * @return A {@link String} name
+     */
+    public abstract String getName(Object player);
+
+    /**
      * Get all online players
      *
      * @return A {@link Collection} of {@link Object} players
