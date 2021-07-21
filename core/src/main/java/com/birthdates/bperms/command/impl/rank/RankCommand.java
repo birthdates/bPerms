@@ -1,7 +1,9 @@
 package com.birthdates.bperms.command.impl.rank;
 
 import com.birthdates.bperms.command.ArgumentCommand;
+import com.birthdates.bperms.command.PermissibleResolver;
 import com.birthdates.bperms.command.RankFinder;
+import com.birthdates.bperms.command.impl.args.PermissionArgument;
 import com.birthdates.bperms.command.impl.args.PrefixArgument;
 import com.birthdates.bperms.command.impl.rank.args.RankAddArgument;
 import com.birthdates.bperms.command.impl.rank.args.RankListArgument;
@@ -22,5 +24,6 @@ public class RankCommand extends ArgumentCommand {
         registerArg(new RankRemoveArgument(), "<rank> - Remove a rank with that name", "remove", "delete");
         registerArg(new RankListArgument(), "- List all ranks", "list", "all");
         registerArg((PrefixArgument<Rank>) () -> rankFinder, "<rank> <prefix> - Set a prefix of a rank", "prefix");
+        registerArg((PermissionArgument<Rank>) () -> rankFinder, "<rank> <permission> (server|all) - Toggle a permission on a server", "permission", "perm");
     }
 }

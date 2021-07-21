@@ -26,11 +26,11 @@ public abstract class Permissible extends RedisDocument {
     /**
      * Our cached permissions
      */
-    protected transient Set<String> cachedPermissions = new HashSet<>();
+    protected transient Set<String> cachedPermissions;
     /**
      * Our permissions (server -> permissions)
      */
-    private Map<String, Map<String, Long>> permissions = new HashMap<>();
+    private Map<String, Map<String, Double>> permissions = new HashMap<>();
     /**
      * Our permission group ids
      */
@@ -79,15 +79,16 @@ public abstract class Permissible extends RedisDocument {
         BPerms.async(this::save);
     }
 
-    private void removeExpiredPermissions() {
+    /**
+     * Remove expired permissions
+     */
+    public void removeExpiredPermissions() {
         if (permissions == null)
             return;
-        for (Map.Entry<String, Map<String, Long>> entry : permissions.entrySet()) {
-            for (Map.Entry<String, Long> permissionEntry : entry.getValue().entrySet()) {
-                if (permissionEntry.getValue() > System.currentTimeMillis())
-                    continue;
-                entry.getValue().remove(permissionEntry.getKey());
-            }
+        for (Map.Entry<String, Map<String, Double>> entry : permissions.entrySet()) {
+            if (!entry.getValue().entrySet().removeIf(permissionEntry -> permissionEntry.getValue() > 0D && permissionEntry.getValue() <= System.currentTimeMillis()))
+                continue;
+            saveAsync();
         }
     }
 
@@ -107,7 +108,7 @@ public abstract class Permissible extends RedisDocument {
 
         // Fill
         if (BPerms.getInstance().getConfiguration().isBypassServerBasedPermissions()) {
-            for (Map<String, Long> permissions : permissions.values()) {
+            for (Map<String, Double> permissions : permissions.values()) {
                 cachedPermissions.addAll(permissions.keySet());
             }
         } else {
@@ -138,8 +139,8 @@ public abstract class Permissible extends RedisDocument {
      * @return A not-null {@link Set} of {@link String}
      */
     @NotNull
-    private Map<String, Long> getOrCreateServer(String server) {
-        Map<String, Long> permissions = this.permissions.getOrDefault(server, null);
+    private Map<String, Double> getOrCreateServer(String server) {
+        Map<String, Double> permissions = this.permissions.getOrDefault(server, null);
         if (permissions == null) {
             this.permissions.put(server, (permissions = new HashMap<>()));
         }
@@ -156,7 +157,7 @@ public abstract class Permissible extends RedisDocument {
     }
 
     public void addPermission(String server, String permission) {
-        addPermission(server, permission, -1);
+        addPermission(server, permission, -1L);
     }
 
     /**
@@ -166,7 +167,7 @@ public abstract class Permissible extends RedisDocument {
      * @param permission Targer permission
      */
     public void addPermission(String server, String permission, long expiry) {
-        getOrCreateServer(server).put(permission, expiry);
+        getOrCreateServer(server).put(permission, expiry > 0D ? (double) (System.currentTimeMillis() + expiry) : expiry);
     }
 
     /**
@@ -187,6 +188,14 @@ public abstract class Permissible extends RedisDocument {
      * @return True, if this permission was found & removed. False, otherwise.
      */
     public boolean removePermission(String server, String permission) {
+        if (server.equalsIgnoreCase("all")) {
+            boolean ret = false;
+            for (Map.Entry<String, Map<String, Double>> entry : permissions.entrySet()) {
+                if (entry.getValue().remove(permission) != null)
+                    ret = true;
+            }
+            return ret;
+        }
         return getOrCreateServer(server).remove(permission) != null;
     }
 

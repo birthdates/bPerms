@@ -64,6 +64,8 @@ public class Profile extends Permissible {
     @Override
     protected void fillCachedPermissions() {
         super.fillCachedPermissions();
+        if (bestRank == null)
+            updateBestRank();
         cachedPermissions.addAll(bestRank.getAllPermissions());
     }
 
@@ -114,12 +116,15 @@ public class Profile extends Permissible {
      */
     public List<String> removeExpiredRanks() {
         List<String> list = new ArrayList<>();
-        for (Map.Entry<String, Double> entry : ranks.entrySet()) {
+        boolean ret = ranks.entrySet().removeIf(entry -> {
             if (entry.getValue() < 0.0D || entry.getValue() > System.currentTimeMillis())
-                continue;
+                return false;
             ranks.remove(entry.getKey());
             list.add(BPerms.getInstance().getRankManager().getRankById(entry.getKey()).getName());
-        }
+            return true;
+        });;
+        if (ret)
+            saveAsync();
         return list;
     }
 

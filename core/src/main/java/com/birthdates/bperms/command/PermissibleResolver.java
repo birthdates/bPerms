@@ -17,4 +17,10 @@ public interface PermissibleResolver<T extends Permissible> {
      */
     T getPermissible(String arg);
 
+    /**
+     * Get the unknown message
+     *
+     * @return A {@link String} message
+     */
+    String getUnknownMessage();
 }

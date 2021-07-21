@@ -8,6 +8,9 @@ import org.bukkit.entity.Player;
 import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.permissions.PermissionAttachmentInfo;
 
+import java.util.ArrayList;
+import java.util.Collection;
+
 /**
  * {@inheritDoc}
  */
@@ -29,10 +32,12 @@ public class BukkitPermissionManager extends PermissionManager {
      * @param player Target player
      */
     private void removeAllAttachments(Player player) {
+        Collection<PermissionAttachment> removedAttachments = new ArrayList<>();
         for (PermissionAttachmentInfo effectivePermission : player.getEffectivePermissions()) {
-            if (effectivePermission.getAttachment() == null || !effectivePermission.getAttachment().getPlugin().equals(BPermsPlugin.getInstance()))
+            if (effectivePermission.getAttachment() == null || removedAttachments.contains(effectivePermission.getAttachment()) || !effectivePermission.getAttachment().getPlugin().equals(BPermsPlugin.getInstance()))
                 continue;
 
+            removedAttachments.add(effectivePermission.getAttachment());
             player.removeAttachment(effectivePermission.getAttachment());
         }
     }
@@ -45,7 +50,6 @@ public class BukkitPermissionManager extends PermissionManager {
         BPermsBukkit.validatePlayer(object);
         Player player = (Player) object;
         removeAllAttachments(player);
-
         PermissionAttachment attachment = player.addAttachment(BPermsPlugin.getInstance());
         for (String permission : permissible.getAllPermissions()) {
             attachment.setPermission(permission, true);

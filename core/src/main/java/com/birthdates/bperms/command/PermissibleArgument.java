@@ -35,6 +35,11 @@ public interface PermissibleArgument<T extends Permissible> extends ArgFunction 
             BPerms.getInstance().getPlayerManager().sendMessage(player, "&cInvalid arguments!");
             return;
         }
-        getFunction(getPermissibleFinder().getPermissible(args[0])).executed(player, label, ArrayUtils.remove(args, 0));
+        T permissible = getPermissibleFinder().getPermissible(args[0]);
+        if (permissible == null) {
+            BPerms.getInstance().getPlayerManager().sendMessage(player, getPermissibleFinder().getUnknownMessage());
+            return;
+        }
+        getFunction(permissible).executed(player, label, ArrayUtils.remove(args, 0));
     }
 }

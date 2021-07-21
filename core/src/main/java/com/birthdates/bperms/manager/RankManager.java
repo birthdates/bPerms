@@ -15,6 +15,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Rank manager
@@ -51,6 +52,23 @@ public class RankManager extends RedisDataManager<Rank> {
 
         sortRanks();
         listenForUpdates();
+        startLookingForExpiredPermissions();
+    }
+
+    /**
+     * Start looking for expired permissions
+     */
+    private void startLookingForExpiredPermissions() {
+        BPerms.getInstance().getExecutor().scheduleAtFixedRate(this::removeExpiredPermissions, 30L, 30L, TimeUnit.MINUTES);
+    }
+
+    /**
+     * Remove expired permissions in ranks
+     */
+    private void removeExpiredPermissions() {
+        for (Rank rank : getSortedRanks()) {
+            rank.removeExpiredPermissions();
+        }
     }
 
     public void sendUpdate(Rank rank) {
@@ -82,8 +100,11 @@ public class RankManager extends RedisDataManager<Rank> {
         for (Object player : BPerms.getInstance().getPlayerManager().getOnlinePlayers()) {
             UUID id = BPerms.getInstance().getPlayerManager().getId(player);
             Profile profile = BPerms.getInstance().getPlayerManager().getProfile(id, false);
-            if (profile.getRanks().contains(hook.getRank()))
-                profile.resetPermissionCache();
+            if (!profile.getRanks().contains(hook.getRank()))
+                continue;
+            profile.resetPermissionCache();
+            BPerms.getInstance().getPermissionManager().unsetPermissions(player, profile);
+            BPerms.getInstance().getPermissionManager().givePermissions(player, profile);
         }
     }
 

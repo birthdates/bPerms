@@ -15,4 +15,12 @@ public class RankFinder implements PermissibleResolver<Rank> {
     public Rank getPermissible(String arg) {
         return BPerms.getInstance().getRankManager().getRankById(arg.toLowerCase());
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getUnknownMessage() {
+        return "&cA rank with that name could not be found.";
+    }
 }
