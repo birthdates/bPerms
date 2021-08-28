@@ -1,5 +1,7 @@
 package com.birthdates.bperms;
 
+import com.birthdates.bperms.command.impl.permissiongroup.PermissionGroupCommand;
+import com.birthdates.bperms.command.impl.profile.ProfileCommand;
 import com.birthdates.bperms.command.impl.rank.RankCommand;
 import com.birthdates.bperms.config.Configuration;
 import com.birthdates.bperms.manager.CommandManager;
@@ -154,7 +156,7 @@ public abstract class BPerms {
      */
     public final void registerCommands() {
         Validate.isTrue(getCommandManager() != null, "No command manager.");
-        getCommandManager().registerCommands(new RankCommand());
+        getCommandManager().registerCommands(new RankCommand(), new ProfileCommand(), new PermissionGroupCommand());
     }
 
     /**
@@ -168,7 +170,7 @@ public abstract class BPerms {
             if (!executor.awaitTermination(3L, TimeUnit.SECONDS))
                 executor.shutdownNow();
         } catch (InterruptedException ignored) {
-
+            log("Failed to shutdown executor.");
         }
 
         instance = null;

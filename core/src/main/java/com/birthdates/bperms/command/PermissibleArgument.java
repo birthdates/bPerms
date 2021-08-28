@@ -1,6 +1,7 @@
 package com.birthdates.bperms.command;
 
 import com.birthdates.bperms.BPerms;
+import com.birthdates.bperms.command.resolver.PermissibleResolver;
 import com.birthdates.bperms.permission.Permissible;
 import org.apache.commons.lang3.ArrayUtils;
 

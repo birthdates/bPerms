@@ -4,6 +4,7 @@ import com.birthdates.bperms.BPerms;
 import com.birthdates.bperms.command.ArgFunction;
 import com.birthdates.bperms.command.PermissibleArgument;
 import com.birthdates.bperms.permission.Permissible;
+import com.birthdates.bperms.utils.TimeUtil;
 
 public interface PermissionArgument<T extends Permissible> extends PermissibleArgument<T> {
 
@@ -17,9 +18,9 @@ public interface PermissionArgument<T extends Permissible> extends PermissibleAr
             String server = args.length > 1 ? args[1] : "all";
             boolean removed = permissible.removePermission(server, permission);
             if (!removed)
-                permissible.addPermission(server, permission);
+                permissible.addPermission(server, permission, args.length > 2 ? TimeUtil.getTime(args[2]) : -1L);
             permissible.saveAsync();
-            BPerms.getInstance().getPlayerManager().sendMessage(player, (removed ? "&c" : "&a")  + "You have " +
+            BPerms.getInstance().getPlayerManager().sendMessage(player, (removed ? "&c" : "&a") + "You have " +
                     (removed ? "removed" : "added") + " the permission " + (removed ? "from" : "to") + " " + permissible.getName() + " for " + server + " server(s)");
         });
     }

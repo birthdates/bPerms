@@ -9,16 +9,32 @@ import com.birthdates.redisdata.data.RedisDataManager;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Abstract player manager
  */
 public abstract class PlayerManager extends RedisDataManager<Profile> {
+
+    /**
+     * Mojang API URL for name -> uuid conversion
+     */
+    private static final String NAME_TO_UUID_URL = "https://api.mojang.com/users/profiles/minecraft/%s";
+    /**
+     * UUID pattern to match from the URL above
+     */
+    private static final Pattern UUID_PATTERN = Pattern.compile("(?<=\"id\":\").*(?=\")");
 
     public PlayerManager() {
         startCheckingForExpiredRanks();
@@ -197,6 +213,55 @@ public abstract class PlayerManager extends RedisDataManager<Profile> {
      * @return A {@link UUID}
      */
     public abstract UUID getId(Object player);
+
+    /**
+     * Fetch a request from {@link PlayerManager#NAME_TO_UUID_URL} that gets a player's UUID from their name
+     *
+     * @param name Player's name
+     * @return The player's {@link UUID}
+     */
+    private UUID getOfflineId(String name) {
+        String uri = String.format(NAME_TO_UUID_URL, name);
+        try {
+            URL url = new URL(uri);
+            HttpURLConnection con = (HttpURLConnection) url.openConnection();
+            con.setRequestMethod("GET");
+            if (con.getResponseCode() != 200)
+                throw new IOException("Received code that's not 200: " + con.getResponseCode());
+
+            try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(con.getInputStream()))) {
+                String line = reader.readLine();
+                Matcher matcher = UUID_PATTERN.matcher(line);
+                if (!matcher.find()) throw new IOException("Failed to a UUID from: " + line);
+                return UUID.fromString(matcher.group());
+            }
+        } catch (IOException | IllegalArgumentException exception) {
+            exception.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * Get a {@link UUID} from a player's name
+     *
+     * @param name Target name
+     * @return An offline {@link UUID}
+     */
+    public UUID getId(String name) {
+        // First check if this name is a UUID
+        try {
+            return UUID.fromString(name);
+        } catch (IllegalArgumentException exception) {
+            // Check for online players with this name (saves API call)
+            for (Object player : getOnlinePlayers()) {
+                if (getName(player).equalsIgnoreCase(name)) return getId(player);
+            }
+
+            // Use Mojang API to fetch UUID from name
+            return getOfflineId(name);
+        }
+    }
 
     /**
      * Translate the color codes in this message

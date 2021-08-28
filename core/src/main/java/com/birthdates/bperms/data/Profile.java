@@ -54,8 +54,23 @@ public class Profile extends Permissible {
         return lastName;
     }
 
+    /**
+     * Get our last known name
+     *
+     * @return A {@link String} name
+     */
     public String getLastName() {
         return lastName;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void resetPermissionCache() {
+        super.resetPermissionCache();
+        BPerms.getInstance().getPermissionManager().unsetPermissions(cachedPlayer, this);
+        BPerms.getInstance().getPermissionManager().givePermissions(cachedPlayer, this);
     }
 
     /**
@@ -122,7 +137,7 @@ public class Profile extends Permissible {
             ranks.remove(entry.getKey());
             list.add(BPerms.getInstance().getRankManager().getRankById(entry.getKey()).getName());
             return true;
-        });;
+        });
         if (ret)
             saveAsync();
         return list;

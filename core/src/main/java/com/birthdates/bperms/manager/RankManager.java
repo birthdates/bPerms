@@ -1,9 +1,7 @@
 package com.birthdates.bperms.manager;
 
 import com.birthdates.bperms.BPerms;
-import com.birthdates.bperms.data.Profile;
 import com.birthdates.bperms.data.Rank;
-import com.birthdates.bperms.hook.Hook;
 import com.birthdates.bperms.hook.Hooks;
 import com.birthdates.bperms.hook.type.RankHook;
 import com.birthdates.redisdata.data.RedisDataManager;
@@ -14,7 +12,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -52,22 +49,22 @@ public class RankManager extends RedisDataManager<Rank> {
 
         sortRanks();
         listenForUpdates();
-        startLookingForExpiredPermissions();
+        startLookingForExpired();
     }
 
     /**
      * Start looking for expired permissions
      */
-    private void startLookingForExpiredPermissions() {
-        BPerms.getInstance().getExecutor().scheduleAtFixedRate(this::removeExpiredPermissions, 30L, 30L, TimeUnit.MINUTES);
+    private void startLookingForExpired() {
+        BPerms.getInstance().getExecutor().scheduleAtFixedRate(this::removeExpired, 30L, 30L, TimeUnit.MINUTES);
     }
 
     /**
      * Remove expired permissions in ranks
      */
-    private void removeExpiredPermissions() {
+    private void removeExpired() {
         for (Rank rank : getSortedRanks()) {
-            rank.removeExpiredPermissions();
+            rank.checkExpiry();
         }
     }
 
@@ -89,23 +86,6 @@ public class RankManager extends RedisDataManager<Rank> {
             rank.applyTo(current);
             rank.callChangeHook(false);
         });
-    }
-
-    @Hook(hook = Hooks.RANK_CHANGED_PERMISSIONS)
-    private void onRankChangedPermissions(RankHook hook) {
-        hook.getRank().resetPermissionCache();
-        for (Rank rank : hook.getRank().getInheritedRanks()) {
-            rank.resetPermissionCache();
-        }
-        for (Object player : BPerms.getInstance().getPlayerManager().getOnlinePlayers()) {
-            UUID id = BPerms.getInstance().getPlayerManager().getId(player);
-            Profile profile = BPerms.getInstance().getPlayerManager().getProfile(id, false);
-            if (!profile.getRanks().contains(hook.getRank()))
-                continue;
-            profile.resetPermissionCache();
-            BPerms.getInstance().getPermissionManager().unsetPermissions(player, profile);
-            BPerms.getInstance().getPermissionManager().givePermissions(player, profile);
-        }
     }
 
     /**

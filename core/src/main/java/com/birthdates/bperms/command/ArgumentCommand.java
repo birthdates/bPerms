@@ -17,8 +17,8 @@ public abstract class ArgumentCommand extends Command {
      */
     private final Set<Argument> args = new LinkedHashSet<>();
 
-    public ArgumentCommand(String name, String permission, int minArgs) {
-        super(name, permission, "", minArgs);
+    public ArgumentCommand(String name, String permission, int minArgs, String... aliases) {
+        super(name, permission, "", minArgs, aliases);
 
         registerArg((player, label, args) -> sendUsageMessage(player, label), "- Send this help message", "help");
     }
@@ -74,6 +74,7 @@ public abstract class ArgumentCommand extends Command {
             BPerms.getInstance().getPlayerManager().sendMessage(player, "&7/" + label + " &f" + name + "&f " + entry.argsDescription);
         }
         BPerms.getInstance().getPlayerManager().sendMessage(player, "");
+        BPerms.getInstance().getPlayerManager().sendMessage(player, "&f<> - required, () - optional, [] - list split by , (i.e 1,2,3)");
         BPerms.getInstance().getPlayerManager().sendMessage(player, line);
     }
 

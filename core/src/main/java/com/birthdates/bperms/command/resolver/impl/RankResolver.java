@@ -1,12 +1,13 @@
-package com.birthdates.bperms.command;
+package com.birthdates.bperms.command.resolver.impl;
 
 import com.birthdates.bperms.BPerms;
+import com.birthdates.bperms.command.resolver.PermissibleResolver;
 import com.birthdates.bperms.data.Rank;
 
 /**
  * {@link PermissibleResolver} of {@link Rank}
  */
-public class RankFinder implements PermissibleResolver<Rank> {
+public class RankResolver implements PermissibleResolver<Rank> {
 
     /**
      * {@inheritDoc}

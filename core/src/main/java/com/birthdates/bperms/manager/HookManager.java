@@ -94,7 +94,7 @@ public class HookManager {
             try {
                 object.method.invoke(object.owner, hookEvent);
             } catch (IllegalAccessException | InvocationTargetException exception) {
-                BPerms.log("Failed to execute hook: " + hookType.getId() + ", " + hookEvent.toString());
+                BPerms.log("Failed to execute hook: " + hookType.getId() + ", " + hookEvent);
                 exception.printStackTrace();
             }
         }

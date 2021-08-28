@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class Rank extends ServerPermissible {
@@ -102,6 +103,21 @@ public class Rank extends ServerPermissible {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void resetPermissionCache() {
+        super.resetPermissionCache();
+        for (Rank rank : getInheritedRanks())
+            rank.resetPermissionCache();
+        for (Object player : BPerms.getInstance().getPlayerManager().getOnlinePlayers()) {
+            UUID id = BPerms.getInstance().getPlayerManager().getId(player);
+            Profile profile = BPerms.getInstance().getPlayerManager().getProfile(id, false);
+            if (profile != null && profile.getRanks().contains(this))
+                profile.resetPermissionCache();
+        }
+    }
 
     /**
      * Call the change hook with Redis call

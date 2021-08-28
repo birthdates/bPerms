@@ -1,17 +1,20 @@
 package com.birthdates.bperms.permission;
 
 import com.birthdates.bperms.BPerms;
-import com.birthdates.bperms.data.PermissionGroup;
 import com.birthdates.redisdata.data.impl.RedisDocument;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Abstract permissible class
@@ -34,7 +37,7 @@ public abstract class Permissible extends RedisDocument {
     /**
      * Our permission group ids
      */
-    private Set<String> permissionGroups = new HashSet<>();
+    private Map<String, Map<String, Double>> permissionGroups = new HashMap<>();
 
     /**
      * Get our translated prefix
@@ -80,54 +83,81 @@ public abstract class Permissible extends RedisDocument {
     }
 
     /**
-     * Remove expired permissions
+     * Remove string from map if expired
+     *
+     * @param map Target map
      */
-    public void removeExpiredPermissions() {
-        if (permissions == null)
+    private void removeExpired(Map<String, Map<String, Double>> map) {
+        if (map == null)
             return;
-        for (Map.Entry<String, Map<String, Double>> entry : permissions.entrySet()) {
-            if (!entry.getValue().entrySet().removeIf(permissionEntry -> permissionEntry.getValue() > 0D && permissionEntry.getValue() <= System.currentTimeMillis()))
+        for (Map.Entry<String, Map<String, Double>> entry : map.entrySet()) {
+            if (!entry.getValue().entrySet().removeIf(newEntry -> newEntry.getValue() > 0D && newEntry.getValue() <= System.currentTimeMillis()))
                 continue;
             saveAsync();
         }
     }
 
+    /**
+     * Check for expired things
+     */
+    public void checkExpiry() {
+        removeExpired(permissions);
+        removeExpired(permissionGroups);
+    }
+
+    /**
+     * Get our noun/name (i.e profile)
+     *
+     * @return A {@link String} noun
+     */
     public abstract String getName();
+
+    /**
+     * Add to cached permissions
+     *
+     * @param map     Target server -> permissions map
+     * @param mapFunc Map function of key set of permissions
+     */
+    private void addPermissions(Map<String, Map<String, Double>> map, Function<Collection<String>, Collection<String>> mapFunc) {
+        // Fill
+        if (BPerms.getInstance().getConfiguration().isBypassServerBasedPermissions()) {
+            for (Map<String, Double> permissions : map.values()) {
+                cachedPermissions.addAll(mapFunc.apply(permissions.keySet()));
+            }
+        } else {
+            cachedPermissions.addAll(mapFunc.apply(map.getOrDefault("all", Collections.emptyMap()).keySet()));
+            cachedPermissions.addAll(mapFunc.apply(map.getOrDefault(BPerms.getInstance().getConfiguration().getServerId(), Collections.emptyMap()).keySet()));
+        }
+    }
+
 
     /**
      * Fill {@link Permissible#cachedPermissions} with all our permissions
      */
     protected void fillCachedPermissions() {
         cachedPermissions = new HashSet<>();
-        removeExpiredPermissions();
+        checkExpiry();
 
         if (permissions == null)
             permissions = new HashMap<>();
         if (permissionGroups == null)
-            permissionGroups = new HashSet<>();
+            permissionGroups = new HashMap<>();
 
         // Fill
-        if (BPerms.getInstance().getConfiguration().isBypassServerBasedPermissions()) {
-            for (Map<String, Double> permissions : permissions.values()) {
-                cachedPermissions.addAll(permissions.keySet());
+        addPermissions(permissions, perms -> perms);
+        addPermissions(permissionGroups, perms -> {
+            List<String> output = new ArrayList<>();
+            Set<Set<String>> sets = perms.stream().map(perm -> BPerms.getInstance().getPermissionManager().getPermissionGroupManager().getPermissionGroupById(perm)).filter(Objects::nonNull).map(Permissible::getAllPermissions).collect(Collectors.toSet());
+            for (Set<String> set : sets) {
+                output.addAll(set);
             }
-        } else {
-            cachedPermissions.addAll(permissions.getOrDefault("all", Collections.emptyMap()).keySet());
-            cachedPermissions.addAll(permissions.getOrDefault(BPerms.getInstance().getConfiguration().getServerId(), Collections.emptyMap()).keySet());
-        }
-
-        List<String> toRemove = new ArrayList<>();
-        for (String groupId : permissionGroups) {
-            PermissionGroup group = BPerms.getInstance().getPermissionManager().getPermissionGroupManager().getPermissionGroupById(groupId);
-            if (group == null) {
-                toRemove.add(groupId);
-                continue;
-            }
-            cachedPermissions.addAll(group.getPermissions());
-        }
-        toRemove.forEach(permissionGroups::remove);
+            return output;
+        });
     }
 
+    /**
+     * Reset our permission cache
+     */
     public void resetPermissionCache() {
         cachedPermissions = null;
     }
@@ -139,11 +169,10 @@ public abstract class Permissible extends RedisDocument {
      * @return A not-null {@link Set} of {@link String}
      */
     @NotNull
-    private Map<String, Double> getOrCreateServer(String server) {
-        Map<String, Double> permissions = this.permissions.getOrDefault(server, null);
-        if (permissions == null) {
-            this.permissions.put(server, (permissions = new HashMap<>()));
-        }
+    private Map<String, Double> getOrCreateServer(String server, Map<String, Map<String, Double>> target) {
+        Map<String, Double> permissions = target.getOrDefault(server, null);
+        if (permissions == null)
+            target.put(server, (permissions = new HashMap<>()));
         return permissions;
     }
 
@@ -156,6 +185,12 @@ public abstract class Permissible extends RedisDocument {
         addPermission("all", permission);
     }
 
+    /**
+     * Add a permission to a servers
+     *
+     * @param server     Target server
+     * @param permission Target permission
+     */
     public void addPermission(String server, String permission) {
         addPermission(server, permission, -1L);
     }
@@ -164,10 +199,12 @@ public abstract class Permissible extends RedisDocument {
      * Add a permission to a certain server (or all)
      *
      * @param server     Target server
-     * @param permission Targer permission
+     * @param permission Target permission
+     * @param expiry     Target expiry (milliseconds)
      */
     public void addPermission(String server, String permission, long expiry) {
-        getOrCreateServer(server).put(permission, expiry > 0D ? (double) (System.currentTimeMillis() + expiry) : expiry);
+        getOrCreateServer(server, this.permissions).put(permission, expiry > 0D ? (double) (System.currentTimeMillis() + expiry) : expiry);
+        resetPermissionCache();
     }
 
     /**
@@ -188,24 +225,84 @@ public abstract class Permissible extends RedisDocument {
      * @return True, if this permission was found & removed. False, otherwise.
      */
     public boolean removePermission(String server, String permission) {
-        if (server.equalsIgnoreCase("all")) {
-            boolean ret = false;
-            for (Map.Entry<String, Map<String, Double>> entry : permissions.entrySet()) {
-                if (entry.getValue().remove(permission) != null)
-                    ret = true;
-            }
-            return ret;
+        if (tryRemoveAll(server, permission, permissions)) {
+            resetPermissionCache();
+            return true;
         }
-        return getOrCreateServer(server).remove(permission) != null;
+        boolean ret = getOrCreateServer(server, permissions).remove(permission) != null;
+        if (ret)
+            resetPermissionCache();
+        return ret;
     }
 
     /**
-     * Get all our permission groups
+     * Try remove permission if server is "all"
      *
-     * @return A {@link Set} of {@link String} that are the permission groups' ids
+     * @param server Target server
+     * @param target Target permission
+     * @param map    Target map
+     * @return True if this operation was successful. False, otherwise.
      */
-    public Set<String> getPermissionGroups() {
-        return permissionGroups;
+    private boolean tryRemoveAll(String server, String target, Map<String, Map<String, Double>> map) {
+        if (!server.equalsIgnoreCase("all")) {
+            return false;
+        }
+        boolean ret = false;
+        for (Map.Entry<String, Map<String, Double>> entry : map.entrySet()) {
+            if (entry.getValue().remove(target) != null)
+                ret = true;
+        }
+        return ret;
+    }
+
+    /**
+     * Remove a permission group from all servers
+     *
+     * @param id Target group's id
+     * @return True, if the operation was successful. False, otherwise.
+     */
+    public boolean removePermissionGroup(String id) {
+        return removePermissionGroup(id, "all");
+    }
+
+    /**
+     * Remove a permission group from a server
+     *
+     * @param id     Target group's id
+     * @param server Target server
+     * @return True, if the operation was successful. False, otherwise.
+     */
+    public boolean removePermissionGroup(String id, String server) {
+        boolean ret = tryRemoveAll(server, id, permissionGroups) || permissionGroups.remove(id) != null;
+        if (ret)
+            resetPermissionCache();
+        return ret;
+    }
+
+    /**
+     * Add a permission group to all servers
+     *
+     * @param id Target group's id
+     * @return True, if the operation was successful. False, otherwise.
+     */
+    public boolean addPermissionGroup(String id) {
+        return addPermissionGroup(id, "all", -1L);
+    }
+
+    /**
+     * Add a permission group to a server
+     *
+     * @param id     Target group's id
+     * @param server Target server
+     * @param expiry Target expiry (milliseconds, -1 for permanent)
+     * @return True, if the operation was successful. False, otherwise.
+     */
+    public boolean addPermissionGroup(String id, String server, long expiry) {
+        Map<String, Double> groups = getOrCreateServer(server, permissionGroups);
+        boolean ret = groups.putIfAbsent(id, expiry > 0L ? (double) (System.currentTimeMillis() + expiry) : -1.0D) == null;
+        if (ret)
+            resetPermissionCache();
+        return ret;
     }
 
     /**
@@ -214,9 +311,8 @@ public abstract class Permissible extends RedisDocument {
      * @return A {@link Set} of {@link String}
      */
     public Set<String> getAllPermissions() {
-        if (cachedPermissions == null) {
+        if (cachedPermissions == null)
             fillCachedPermissions();
-        }
-        return cachedPermissions;
+        return Collections.unmodifiableSet(cachedPermissions);
     }
 }

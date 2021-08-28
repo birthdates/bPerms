@@ -1,4 +1,4 @@
-package com.birthdates.bperms.command;
+package com.birthdates.bperms.command.resolver;
 
 import com.birthdates.bperms.permission.Permissible;
 

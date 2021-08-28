@@ -34,10 +34,9 @@ public class BukkitPermissionManager extends PermissionManager {
     private void removeAllAttachments(Player player) {
         Collection<PermissionAttachment> removedAttachments = new ArrayList<>();
         for (PermissionAttachmentInfo effectivePermission : player.getEffectivePermissions()) {
-            if (effectivePermission.getAttachment() == null || removedAttachments.contains(effectivePermission.getAttachment()) || !effectivePermission.getAttachment().getPlugin().equals(BPermsPlugin.getInstance()))
+            if (effectivePermission.getAttachment() == null || !effectivePermission.getAttachment().getPlugin().equals(BPermsPlugin.getInstance()) || !removedAttachments.add(effectivePermission.getAttachment()))
                 continue;
 
-            removedAttachments.add(effectivePermission.getAttachment());
             player.removeAttachment(effectivePermission.getAttachment());
         }
     }

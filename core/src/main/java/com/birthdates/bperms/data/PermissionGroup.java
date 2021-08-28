@@ -1,24 +1,16 @@
 package com.birthdates.bperms.data;
 
-import com.birthdates.redisdata.data.impl.RedisDocument;
-
-import java.util.HashSet;
-import java.util.Set;
+import com.birthdates.bperms.permission.ServerPermissible;
 
 /**
  * Permission group document
  */
-public class PermissionGroup extends RedisDocument {
+public class PermissionGroup extends ServerPermissible {
 
     /**
      * Our ID
      */
     private final String id;
-
-    /**
-     * Our permissions
-     */
-    private Set<String> permissions = new HashSet<>();
 
     public PermissionGroup(String id) {
         this.id = id;
@@ -49,11 +41,10 @@ public class PermissionGroup extends RedisDocument {
     }
 
     /**
-     * Get all our permissions
-     *
-     * @return A {@link Set} of {@link String}
+     * {@inheritDoc}
      */
-    public Set<String> getPermissions() {
-        return permissions;
+    @Override
+    public String getName() {
+        return id;
     }
 }
